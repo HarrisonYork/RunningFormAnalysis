@@ -5,7 +5,7 @@ model = YOLO('yolo11n-pose.pt')
 
 # Run inference on your running video
 # The 'save=True' argument automatically generates an output video with the joints visualized
-results = model(source='data/private.mp4', show=True, save=True, conf=0.5)
+results = model(source='data/private/testVid.mp4', show=True, save=True, conf=0.5)
 
 # To access the raw joint coordinates for your form analyzer later:
 for frame_result in results:

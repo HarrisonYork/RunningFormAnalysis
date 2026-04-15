@@ -2,3 +2,5 @@
 .venv/
 data/private/
 runs/pose/
+
+yolo*

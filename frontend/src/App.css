@@ -114,6 +114,13 @@ p {
 }
 
 /* Button Styles */
+.action-buttons {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+  align-items: center;
+}
+
 button {
   border-radius: 8px;
   border: none;
@@ -121,14 +128,8 @@ button {
   font-size: 1.1rem;
   font-weight: 600;
   font-family: inherit;
-  background-color: #3b82f6;
-  color: white;
   cursor: pointer;
   transition: background-color 0.2s, transform 0.1s;
-}
-
-button:hover:not(:disabled) {
-  background-color: #2563eb;
 }
 
 button:active:not(:disabled) {
@@ -136,8 +137,29 @@ button:active:not(:disabled) {
 }
 
 button:disabled {
-  background-color: #94a3b8;
+  background-color: #94a3b8 !important;
+  color: #e2e8f0 !important;
   cursor: not-allowed;
+}
+
+/* Specific Button Colors */
+.analyze-btn {
+  background-color: #3b82f6;
+  color: white;
+}
+
+.analyze-btn:hover:not(:disabled) {
+  background-color: #2563eb;
+}
+
+.clear-btn {
+  background-color: #ffffff42;
+  color: #ffffff;
+  border: 1px solid #ffffff;
+}
+
+.clear-btn:hover:not(:disabled) {
+  background-color: #ffffff5b;
 }
 
 /* Project Details Section */

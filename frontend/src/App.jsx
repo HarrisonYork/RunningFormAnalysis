@@ -123,6 +123,8 @@ const triggerFileInput = () => {
         <h2>About</h2>
         <p>
           This tool uses machine learning to estimate a runner's pose and analyze their form.
+        </p>
+        <p>
           Upload a clear, side-profile video of your run to get started.
         </p>
         <ul>

@@ -2,24 +2,15 @@
   font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
   line-height: 1.5;
   font-weight: 400;
-  color: #102334;
-  background-color: #070e15;
-  /* #f1f5f9; */
 }
 
 body {
-  margin: 0;
+  margin: 0 auto 0 auto;
   display: flex;
   justify-content: center;
   min-width: 320px;
-  min-height: 100vh;
-}
-
-#app-container {
   max-width: 800px;
-  width: 100%;
-  margin: 2rem auto;
-  padding: 0 1rem;
+  min-height: 100vh;
 }
 
 h1 {
@@ -42,7 +33,6 @@ p {
 .upload-section {
   text-align: center;
   padding: 3rem 2rem;
-  background: 102334;
   border-radius: 16px;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
   margin-bottom: 2rem;
@@ -171,7 +161,6 @@ button:disabled {
 }
 
 #project-details p {
-  /* float: left; */
   text-align: left;
 }
 

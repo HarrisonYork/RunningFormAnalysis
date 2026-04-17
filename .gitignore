@@ -1,6 +1,10 @@
 
 .venv/
-data/private/
-runs/pose/
+datasets/athlete_pose_annotations/
+datasets/private/
+datasets/athlete_pose_converted/test/
+datasets/athlete_pose_converted/train/
+datasets/athlete_pose_converted/valid/
+runs/pose/proof_of_concept/
 
 yolo*

@@ -1,0 +1,10 @@
+# athlete_pose.yaml
+path: datasets/athlete_pose_converted
+train: train/images
+val: valid/images
+
+names:
+  0: runner
+
+# keypoints (17 joints, 3 dimensions: x, y, visible)
+kpt_shape: [17, 3]

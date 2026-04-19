@@ -194,6 +194,9 @@ const triggerFileInput = () => {
         <p>
           Upload a clear, side-profile video of your run to get started.
         </p>
+        <p>
+          <a href="https://github.com/HarrisonYork/RunningForm">Project Code</a>
+        </p>
         <ul>
           {/* <li></li>
           <li></li>

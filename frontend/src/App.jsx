@@ -6,6 +6,7 @@ function App() {
   const [previewUrl, setPreviewUrl] = useState(null);
   const [isUploading, setIsUploading] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
+  const [resultVideoUrl, setResultVideoUrl] = useState(null);
   
   const fileInputRef = useRef(null);
 
@@ -18,8 +19,7 @@ const handleFileChange = (event) => {
     
     if (file) {
       if (file.size > MAX_FILE_SIZE_BYTES) {
-        setErrorMsg(`File size exceeds the ${MAX_FILE_SIZE_MB}MB limit. Please upload a smaller video.`);
-        handleClear(); 
+        setErrorMsg(`File size exceeds the ${MAX_FILE_SIZE_MB}MB limit. Please upload a smaller video.`); 
         return;
       }
       
@@ -29,22 +29,24 @@ const handleFileChange = (event) => {
   };
 
 const triggerFileInput = () => {
-    // Only trigger if we aren't currently analyzing
     if (fileInputRef.current && !isUploading) {
       fileInputRef.current.click();
     }
   };
 
   const handleClear = (e) => {
-    if (e) e.stopPropagation(); // Prevents triggering the file input click if event bubbles
+    if (e) e.stopPropagation();
 
-    // Clean up the object URL to avoid memory leaks
     if (previewUrl) {
       URL.revokeObjectURL(previewUrl);
+    }
+    if (resultVideoUrl) {
+      URL.revokeObjectURL(resultVideoUrl);
     }
 
     setVideoFile(null);
     setPreviewUrl(null);
+    setResultVideoUrl(null);
     setErrorMsg('');
     
     if (fileInputRef.current) {
@@ -56,13 +58,34 @@ const triggerFileInput = () => {
     if (!videoFile) return;
     
     setIsUploading(true);
-    console.log("Simulating upload and analysis for:", videoFile.name);
+    setErrorMsg('');
+    setResultVideoUrl(null); // Clear previous results
     
-    // TODO: Connect this to your Python backend using fetch() or axios
-    setTimeout(() => {
-      alert(`Successfully analyzed ${videoFile.name}! (Placeholder)`);
+    const formData = new FormData();
+    formData.append("video", videoFile);
+
+    try {
+      const response = await fetch("http://127.0.0.1:5000/api/pose_estimate", {
+        method: "POST",
+        body: formData,
+      });
+
+      if (!response.ok) {
+        throw new Error(`Server error: ${response.statusText}`);
+      }
+
+      // We are expecting a video file back, so we parse it as a Blob instead of JSON
+      const videoBlob = await response.blob();
+      const videoUrl = URL.createObjectURL(videoBlob);
+      
+      setResultVideoUrl(videoUrl);
+      
+    } catch (error) {
+      console.error("Analysis failed:", error);
+      setErrorMsg("Failed to analyze the video. Please check the server.");
+    } finally {
       setIsUploading(false);
-    }, 2000);
+    }
   };
 
   return (
@@ -81,7 +104,7 @@ const triggerFileInput = () => {
               ref={fileInputRef}
             />
             <div className="upload-icon">📁</div>
-            <p>Click to browse or drag and drop your video here</p>
+            <p>Click to upload a video</p>
             <span>MP4, MOV, or AVI (Max {MAX_FILE_SIZE_MB}MB)</span>
           </div>
         )}
@@ -89,15 +112,55 @@ const triggerFileInput = () => {
         {/* Error Message Display */}
         {errorMsg && <div className="error-msg">{errorMsg}</div>}
 
-        {/* Local Video Preview & Controls */}
         {videoFile && (
           <div className="active-video-container">
-            <div className="video-preview">
-              <video src={previewUrl} controls>
-                Your browser does not support the video tag.
-              </video>
-              <p className="file-name"><strong>Selected:</strong> {videoFile.name}</p>
-            </div>
+            
+            {!resultVideoUrl && previewUrl && (
+              <div className="video-preview">
+                <video 
+                  src={previewUrl} 
+                  controls={!isUploading} // Disable controls while analyzing
+                  style={{ 
+                    opacity: isUploading ? 0.2 : 1, // Dim the video while loading
+                    transition: 'opacity 0.5s ease'
+                  }} 
+                >
+                  Your browser does not support the video tag.
+                </video>
+
+                {isUploading && (
+                  <div 
+                    className="loading-overlay"
+                    style={{
+                      position: 'absolute',
+                      top: 0, left: 0, right: 0, bottom: 0,
+                      display: 'flex',
+                      flexDirection: 'column',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      pointerEvents: 'none' // Prevents overlay from blocking clicks
+                    }}
+                  >
+                    <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>⏳</div>
+                    <h3 style={{ color: 'white', margin: 0, textShadow: '0 2px 4px rgba(0,0,0,0.8)' }}>
+                      Analyzing your running form...
+                    </h3>
+                  </div>
+                )}
+                
+                <p className="file-name"><strong>Selected:</strong> {videoFile.name}</p>
+                
+              </div>
+            )}
+
+            {!isUploading && resultVideoUrl && (
+              <div className="results-container">
+                <video src={resultVideoUrl} controls>
+                  Your browser does not support the video tag.
+                </video>
+                <p className="file-name"><strong>Analyzed:</strong> {videoFile.name}</p>
+              </div>
+            )}
 
             <div className="action-buttons">
               <button 
@@ -107,13 +170,17 @@ const triggerFileInput = () => {
               >
                 Clear Video
               </button>
-              <button 
-                onClick={handleAnalyze} 
-                disabled={!videoFile || isUploading}
-                className="analyze-btn"
-              >
-                {isUploading ? 'Analyzing...' : 'Analyze Form'}
-              </button>
+              
+              {/* Only show the Analyze button if we haven't successfully generated the result yet */}
+              {!resultVideoUrl && (
+                <button 
+                  onClick={handleAnalyze} 
+                  disabled={!videoFile || isUploading}
+                  className="analyze-btn"
+                >
+                  {isUploading ? 'Analyzing...' : 'Analyze Form'}
+                </button>
+              )}
             </div>
           </div>
         )}

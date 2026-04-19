@@ -25,6 +25,10 @@ h2 {
   margin-top: 0;
 }
 
+h3 {
+  color: #f1f5f9;
+}
+
 p {
   color: #f1f5f9;
 }
@@ -91,12 +95,12 @@ p {
 }
 
 /* Video Preview Styles */
-.video-preview {
+.video-preview, .results-container  {
   margin: 1.5rem 0 2rem 0;
 }
 
-.video-preview video {
-  max-width: 100%;
+.video-preview video, .results-container video {
+  max-height: 600px;
   height: auto;
   border-radius: 8px;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);

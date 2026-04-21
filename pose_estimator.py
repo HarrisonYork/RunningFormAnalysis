@@ -1,4 +1,5 @@
 import os
+import torch
 import logging
 import subprocess
 from flask import Flask, jsonify, request, send_file
@@ -6,6 +7,8 @@ from flask_cors import CORS
 from werkzeug.utils import secure_filename
 from ultralytics import YOLO
 from dotenv import load_dotenv
+from form_analyzer import process_results
+
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
@@ -24,7 +27,7 @@ app = Flask(__name__)
 CORS(app)
 
 # path to save user upload (unedited video)
-UPLOAD_FOLDER = 'uploads'
+UPLOAD_FOLDER = 'tmp_uploads'
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
@@ -60,7 +63,11 @@ def pose_estimate():
         
         logging.info(f"Successfully saved {filename} to {filepath}. Starting YOLO inference...")
 
-        results = model(source=filepath, save=True, project="user_submissions", exist_ok=True)
+        results = model(source=filepath, save=True, stream=True, conf=0.5, project="user_submissions", exist_ok=True)
+
+        print("Pose results complete! Processing results...")
+        
+        process_results(results, filename)
 
         # Clean up the original uploaded file to save space
         if os.path.exists(filepath):

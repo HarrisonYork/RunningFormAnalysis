@@ -35,10 +35,6 @@ app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 OUTPUT_FOLDER = 'runs/pose/user_submissions/predict/'
 os.makedirs(OUTPUT_FOLDER, exist_ok=True)
 
-@app.route('/api/hello', methods=['GET'])
-def hello_world():
-    return jsonify({"message": "Hello, World!"})
-
 @app.route('/api/pose_estimate', methods=['POST'])
 def pose_estimate():
     if 'video' not in request.files:

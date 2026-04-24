@@ -1,110 +1,136 @@
+"""
+form_analyzer.py
+----------------
+Two responsibilities, cleanly separated:
+  1. process_results()  — turns raw YOLO output into a normalized .pt tensor
+  2. FormAnalyzerCNN    — the model definition used by both training and inference
+"""
+
 import os
-import glob
-import numpy as np
 import torch
 import torch.nn as nn
+import logging
 
-def process_results(results, filename):
+log = logging.getLogger(__name__)
+
+# ── Where tensors land after processing ──────────────────────────────────────
+
+TENSOR_OUTPUT_DIR = os.path.join(
+    "runs", "pose", "user_submissions", "normalized_kpts"
+)
+
+
+# ── 1. Preprocessing ──────────────────────────────────────────────────────────
+
+def process_results(results, filename: str) -> str | None:
+    """
+    Converts a YOLO results generator into a normalized keypoint tensor and
+    saves it to disk.
+
+    Args:
+        results:  Generator from model(source=..., stream=True)
+        filename: Original video filename (e.g. 'run_001.mp4')
+
+    Returns:
+        Path to the saved tensor, or None if no valid frames were found.
+    """
+    os.makedirs(TENSOR_OUTPUT_DIR, exist_ok=True)
     video_tensor_list = []
+
     for r in results:
         if len(r.keypoints) == 0 or len(r.boxes) == 0:
             continue
 
-        # Grab the keypoints and bounding box for the FIRST detected person
-        # keypoints.data shape is (1, 17, 3) -> [person_index, joint_index, (x, y, conf)]
-        kpts = r.keypoints.data[0] 
-        bbox_height = r.boxes.xywh[0][3] # [x_center, y_center, width, height]
-        
-        # Left Hip (11) and Right Hip (12)
+        # First detected person only
+        kpts        = r.keypoints.data[0]          # (17, 3) — x, y, conf
+        bbox_height = r.boxes.xywh[0][3]           # bounding box height in px
+
+        # Hip-centred normalization anchor
         l_hip_x, l_hip_y = kpts[11][0], kpts[11][1]
         r_hip_x, r_hip_y = kpts[12][0], kpts[12][1]
-        
         hip_center_x = (l_hip_x + r_hip_x) / 2.0
         hip_center_y = (l_hip_y + r_hip_y) / 2.0
-        
-        # Initialize an empty tensor for this frame's 17 normalized joints
+
         normalized_kpts = torch.zeros((17, 3))
-        
-        # Apply the localized mathematical normalization
         for i in range(17):
             x, y, conf = kpts[i]
-            if conf > 0: # Only normalize if the joint is visible
+            if conf > 0:
                 normalized_kpts[i][0] = (x - hip_center_x) / bbox_height
                 normalized_kpts[i][1] = (y - hip_center_y) / bbox_height
-            normalized_kpts[i][2] = conf # Keep visibility/confidence score as-is
-            
-        # Flatten the (17, 3) matrix into a 1D vector of length 51
-        video_tensor_list.append(normalized_kpts.flatten())
+            normalized_kpts[i][2] = conf
 
-    # Stack the list of 1D vectors into a final 2D PyTorch Tensor (T, 51)
-    if len(video_tensor_list) > 0:
-        final_timeseries_tensor = torch.stack(video_tensor_list)
-        
-        tensor_save_path = os.path.join("runs", "pose", "user_submissions", "normalized_kpts", f"{filename.rsplit('.', 1)[0]}_features.pt")
-        torch.save(final_timeseries_tensor, tensor_save_path)
-        print(f"Successfully saved normalized feature tensor of shape {final_timeseries_tensor.shape}")
+        video_tensor_list.append(normalized_kpts.flatten())  # → (51,)
 
+    if not video_tensor_list:
+        log.warning(f"No valid frames found in {filename}. Skipping save.")
+        return None
+
+    tensor = torch.stack(video_tensor_list)  # (T, 51)
+
+    stem = filename.rsplit(".", 1)[0]
+    save_path = os.path.join(TENSOR_OUTPUT_DIR, f"{stem}_features.pt")
+    torch.save(tensor, save_path)
+    log.info(f"Saved tensor {tensor.shape} → {save_path}")
+    return save_path
+
+
+# ── 2. Model ──────────────────────────────────────────────────────────────────
 
 class FormAnalyzerCNN(nn.Module):
-    def __init__(self, num_features=51, num_classes=3):
-        """
-        num_features: 51 (17 keypoints * 3 values [x, y, visibility])
-        num_classes: Number of form errors we are classifying (e.g., Heel Strike, Overstriding, Posture)
-        """
-        super(FormAnalyzerCNN, self).__init__()
-        
-        # Feature Extraction: Sliding across the time dimension
+    """
+    1-D CNN that classifies running form errors from a keypoint time-series.
+
+    Input:  (Batch, T, 51)  — T frames, 51 features per frame
+    Output: (Batch, num_classes)  — raw logits (apply sigmoid for probabilities)
+
+    Classes (default):
+        0 — overstriding
+        1 — forward_lean
+        2 — vertical_bounce
+    """
+
+    def __init__(self, num_features: int = 51, num_classes: int = 3):
+        super().__init__()
+
         self.conv_block = nn.Sequential(
-            # Layer 1: Detect local frame-to-frame changes
-            nn.Conv1d(in_channels=num_features, out_channels=64, kernel_size=3, padding=1),
+            # Layer 1 — detect frame-to-frame joint movement
+            nn.Conv1d(num_features, 64, kernel_size=3, padding=1),
             nn.BatchNorm1d(64),
             nn.ReLU(),
             nn.MaxPool1d(kernel_size=2),
-            nn.Dropout(p=0.3), # Regularization for the rubric!
-            
-            # Layer 2: Detect larger patterns over multiple frames
-            nn.Conv1d(in_channels=64, out_channels=128, kernel_size=3, padding=1),
+            nn.Dropout(p=0.3),
+            # Layer 2 — detect multi-frame gait patterns
+            nn.Conv1d(64, 128, kernel_size=3, padding=1),
             nn.BatchNorm1d(128),
             nn.ReLU(),
             nn.MaxPool1d(kernel_size=2),
-            nn.Dropout(p=0.3)
+            nn.Dropout(p=0.3),
         )
-        
-        # Adaptive pooling ensures the output is always the same size 
-        # even if users upload videos of different lengths (different T)
+
+        # Global average pooling → fixed-size representation regardless of T
         self.adaptive_pool = nn.AdaptiveAvgPool1d(1)
-        
-        # Classification Head
+
         self.classifier = nn.Sequential(
             nn.Linear(128, 64),
             nn.ReLU(),
             nn.Dropout(p=0.4),
-            # Output layer: Raw logits (No sigmoid here, we will use BCEWithLogitsLoss)
-            nn.Linear(64, num_classes) 
+            nn.Linear(64, num_classes),
         )
 
-    def forward(self, x):
-        # x input shape from YOLO pipeline: (Batch, T, 51)
-        
-        # 1. Permute to match PyTorch Conv1d expectations: (Batch, 51, T)
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        # x: (B, T, 51) → permute to (B, 51, T) for Conv1d
         x = x.permute(0, 2, 1)
-        
-        # 2. Pass through Convolutional layers
         x = self.conv_block(x)
-        
-        # 3. Pool to a fixed size and flatten
-        x = self.adaptive_pool(x)
-        x = torch.flatten(x, 1)
-        
-        # 4. Classify
-        logits = self.classifier(x)
-        return logits
+        x = self.adaptive_pool(x)       # (B, 128, 1)
+        x = torch.flatten(x, 1)         # (B, 128)
+        return self.classifier(x)       # (B, num_classes)
 
+
+# ── Smoke test ────────────────────────────────────────────────────────────────
 
 if __name__ == "__main__":
-    # Simulate a batch of 4 videos, each 90 frames long, with 51 features
-    mock_data = torch.randn(4, 90, 51) 
-    model = FormAnalyzerCNN(num_features=51, num_classes=3)
-    output = model(mock_data)
-    print(f"Input shape: {mock_data.shape}")
-    print(f"Output shape: {output.shape}") # Should be [4, 3]
+    mock = torch.randn(4, 90, 51)
+    model = FormAnalyzerCNN()
+    out = model(mock)
+    assert out.shape == (4, 3), f"Unexpected output shape: {out.shape}"
+    print(f"✓ Forward pass OK — input {mock.shape} → output {out.shape}")

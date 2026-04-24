@@ -6,6 +6,7 @@ datasets/private/
 datasets/athlete_pose_converted/test/
 datasets/athlete_pose_converted/train/
 datasets/athlete_pose_converted/valid/
+datasets/custom_running_form/
 runs/pose/proof_of_concept/
 runs/pose/user_submissions/
 

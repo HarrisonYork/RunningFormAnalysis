@@ -2,16 +2,19 @@ import os
 import torch
 import logging
 import subprocess
-from flask import Flask, jsonify, request, send_file
+from flask import Flask, jsonify, request, send_file, send_from_directory
 from flask_cors import CORS
 from werkzeug.utils import secure_filename
 from ultralytics import YOLO
 from dotenv import load_dotenv
-from form_analyzer import process_results
 
+from form_analyzer_model import FormAnalyzer1DCNN, process_results_api
+
+device = torch.device("mps" if torch.backends.mps.is_available() else "cpu")
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
+# YOLO model
 load_dotenv()
 model_path = os.environ.get("MODEL_PATH", ".")
 if model_path.startswith("runs"):
@@ -19,9 +22,15 @@ if model_path.startswith("runs"):
 
 logging.info(f"Loading YOLO model from: {model_path}")
 try:
-    model = YOLO(model_path)
+    model = YOLO(model_path).to(device)
 except Exception as e:
     logging.error(f"Failed to load model: {e}")
+
+# CNN model
+cnn_model = FormAnalyzer1DCNN(num_features=51, num_classes=4)
+cnn_model.load_state_dict(torch.load('runs/form/weights/form_analyzer_model.pt', map_location=device))
+cnn_model.to(device)
+cnn_model.eval()
 
 app = Flask(__name__)
 CORS(app)
@@ -60,21 +69,48 @@ def pose_estimate():
         logging.info(f"Successfully saved {filename} to {filepath}. Starting YOLO inference...")
 
         results = model(source=filepath, save=True, stream=True, conf=0.5, project="user_submissions", exist_ok=True)
-
         print("Pose results complete! Processing results...")
         
-        process_results(results, filename)
+        keypoint_tensor = process_results_api(results, filename)
+
+        cnn_input = keypoint_tensor.unsqueeze(0).permute(0, 2, 1).to(device)
+
+        with torch.no_grad(): # Disable gradient tracking for speed and memory
+            logits = cnn_model(cnn_input)
+            
+            # Apply Sigmoid to convert raw logits into 0.0 -> 1.0 probabilities
+            probabilities = torch.sigmoid(logits).squeeze(0) 
+            
+        # Map probabilities to percentages for the React frontend
+        confidences = {
+            "heel_strike": round(probabilities[0].item() * 100, 2),
+            "lean_forward": round(probabilities[1].item() * 100, 2),
+            "arms_tight": round(probabilities[2].item() * 100, 2),
+            "arms_loose": round(probabilities[3].item() * 100, 2)
+        }
+        logging.info(f"Model predictions: {confidences}")
 
         # Clean up the original uploaded file to save space
         if os.path.exists(filepath):
             os.remove(filepath)
 
         # Send the actual video file back to the React frontend
-        return send_file(output_filepath, mimetype='video/mp4')
+        # return send_file(output_filepath, mimetype='video/mp4')
+        return jsonify({
+            "status": "success",
+            "confidences": confidences,
+            "video_url": f"/api/videos/{output_filename}" # Provide URL for React to fetch video
+        }), 200
 
     except Exception as e:
         logging.error(f"Error during video processing: {str(e)}")
         return jsonify({"error": "An internal server error occurred during analysis."}), 500
+
+
+@app.route('/api/videos/<filename>', methods=['GET'])
+def get_video(filename):
+    """Allows the React frontend to fetch the rendered YOLO video file."""
+    return send_from_directory(OUTPUT_FOLDER, filename, mimetype='video/mp4')
 
 # if __name__ == '__main__':
 #     app.run(debug=True, port=8000)

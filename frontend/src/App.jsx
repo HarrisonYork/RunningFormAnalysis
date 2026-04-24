@@ -7,6 +7,8 @@ function App() {
   const [isUploading, setIsUploading] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
   const [resultVideoUrl, setResultVideoUrl] = useState(null);
+  const [videoUrl, setVideoUrl] = useState(null);
+  const [confidences, setConfidences] = useState(null);
   
   const fileInputRef = useRef(null);
 
@@ -66,23 +68,22 @@ const triggerFileInput = () => {
 
     try {
       const response = await fetch("http://127.0.0.1:5000/api/pose_estimate", {
-        method: "POST",
-        body: formData,
+          method: 'POST',
+          body: formData,
       });
 
+      const data = await response.json();
+
       if (!response.ok) {
-        throw new Error(`Server error: ${response.statusText}`);
+          throw new Error(data.error || "Failed to analyze video.");
       }
 
-      // We are expecting a video file back, so we parse it as a Blob instead of JSON
-      const videoBlob = await response.blob();
-      const videoUrl = URL.createObjectURL(videoBlob);
-      
-      setResultVideoUrl(videoUrl);
-      
-    } catch (error) {
-      console.error("Analysis failed:", error);
-      setErrorMsg("Failed to analyze the video. Please check the server.");
+      setConfidences(data.confidences);
+      setVideoUrl(data.video_url);
+
+    } catch (err) {
+      console.error("Upload error:", err);
+      setError(err.message);
     } finally {
       setIsUploading(false);
     }
@@ -203,6 +204,31 @@ const triggerFileInput = () => {
           <li></li> */}
         </ul>
       </section>
+
+      {confidences && (
+        <div className="metrics-wrapper" style={{ padding: '1rem', background: '#f5f5f5', borderRadius: '8px' }}>
+            <h3>Form Analysis Metrics</h3>
+            <p>Our neural network detected the following habits:</p>
+            <ul style={{ listStyleType: 'none', padding: 0 }}>
+                <li style={{ marginBottom: '10px' }}>
+                    <strong>Heel Strike:</strong> {confidences.heel_strike}%
+                    {confidences.heel_strike > 50 && <span style={{color: 'red', marginLeft: '8px'}}>⚠️ High</span>}
+                </li>
+                <li style={{ marginBottom: '10px' }}>
+                    <strong>Forward Lean:</strong> {confidences.lean_forward}%
+                    {confidences.lean_forward > 50 && <span style={{color: 'red', marginLeft: '8px'}}>⚠️ High</span>}
+                </li>
+                <li style={{ marginBottom: '10px' }}>
+                    <strong>Arms Too Tight:</strong> {confidences.arms_tight}%
+                    {confidences.arms_tight > 50 && <span style={{color: 'red', marginLeft: '8px'}}>⚠️ High</span>}
+                </li>
+                <li style={{ marginBottom: '10px' }}>
+                    <strong>Arms Too Loose:</strong> {confidences.arms_loose}%
+                    {confidences.arms_loose > 50 && <span style={{color: 'red', marginLeft: '8px'}}>⚠️ High</span>}
+                </li>
+            </ul>
+        </div>
+      )}
     </div>
   );
 }

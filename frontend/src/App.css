@@ -39,7 +39,6 @@ p {
   padding: 3rem 2rem;
   border-radius: 16px;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
-  margin-bottom: 2rem;
 }
 
 .upload-box {
@@ -101,6 +100,7 @@ p {
 
 .video-preview video, .results-container video {
   max-height: 600px;
+  max-width: 700px;
   height: auto;
   border-radius: 8px;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
@@ -154,6 +154,14 @@ button:disabled {
 
 .clear-btn:hover:not(:disabled) {
   background-color: #ffffff5b;
+}
+
+/* Metrics Wrapper */
+.metrics-wrapper {
+  margin: 0 auto 0 auto;
+  max-width: 700px;
+  padding: 20px;
+  background-color: #ffffff0c;
 }
 
 /* Project Details Section */

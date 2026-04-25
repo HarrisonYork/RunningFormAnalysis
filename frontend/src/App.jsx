@@ -1,5 +1,6 @@
 import { useState, useRef } from 'react';
 import './App.css';
+import FormFeedback from './FormFeedback';
 
 function App() {
   const [videoFile, setVideoFile] = useState(null);
@@ -86,8 +87,35 @@ const triggerFileInput = () => {
       setError(err.message);
     } finally {
       setIsUploading(false);
+
+      handleVideo();
     }
   };
+
+  const handleVideo = async () => {
+    if (!videoUrl) {
+      return;
+    }
+
+    const endpoint = "http://127.0.0.1:5000/" + videoUrl;
+    try {
+      const response = await fetch(endpoint, {
+          method: 'GET',
+      });
+
+      if (!response.ok) {
+        throw new Error(`Server error: ${response.statusText}`);
+      }
+
+      const videoBlob = await response.blob();
+      const resVideoUrl = URL.createObjectURL(videoBlob);
+      
+      setResultVideoUrl(resVideoUrl);
+
+    } catch (error) {
+      setErrorMsg("Failed to fetch the video. Please check the server.");
+    }
+  }
 
   return (
     <div id="app-container">
@@ -187,6 +215,14 @@ const triggerFileInput = () => {
         )}
       </section>
 
+      <section id="form-analysis">
+        {confidences && (
+          <div className="metrics-wrapper" style={{ padding: '1rem', borderRadius: '8px' }}>
+              <FormFeedback confidences={confidences} />
+          </div>
+        )}
+      </section>
+
       <section id="project-details">
         <h2>About</h2>
         <p>
@@ -204,31 +240,6 @@ const triggerFileInput = () => {
           <li></li> */}
         </ul>
       </section>
-
-      {confidences && (
-        <div className="metrics-wrapper" style={{ padding: '1rem', background: '#f5f5f5', borderRadius: '8px' }}>
-            <h3>Form Analysis Metrics</h3>
-            <p>Our neural network detected the following habits:</p>
-            <ul style={{ listStyleType: 'none', padding: 0 }}>
-                <li style={{ marginBottom: '10px' }}>
-                    <strong>Heel Strike:</strong> {confidences.heel_strike}%
-                    {confidences.heel_strike > 50 && <span style={{color: 'red', marginLeft: '8px'}}>⚠️ High</span>}
-                </li>
-                <li style={{ marginBottom: '10px' }}>
-                    <strong>Forward Lean:</strong> {confidences.lean_forward}%
-                    {confidences.lean_forward > 50 && <span style={{color: 'red', marginLeft: '8px'}}>⚠️ High</span>}
-                </li>
-                <li style={{ marginBottom: '10px' }}>
-                    <strong>Arms Too Tight:</strong> {confidences.arms_tight}%
-                    {confidences.arms_tight > 50 && <span style={{color: 'red', marginLeft: '8px'}}>⚠️ High</span>}
-                </li>
-                <li style={{ marginBottom: '10px' }}>
-                    <strong>Arms Too Loose:</strong> {confidences.arms_loose}%
-                    {confidences.arms_loose > 50 && <span style={{color: 'red', marginLeft: '8px'}}>⚠️ High</span>}
-                </li>
-            </ul>
-        </div>
-      )}
     </div>
   );
 }

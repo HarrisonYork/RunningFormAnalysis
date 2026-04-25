@@ -50,6 +50,7 @@ const triggerFileInput = () => {
     setVideoFile(null);
     setPreviewUrl(null);
     setResultVideoUrl(null);
+    setConfidences(null);
     setErrorMsg('');
     
     if (fileInputRef.current) {

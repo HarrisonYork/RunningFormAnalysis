@@ -8,41 +8,43 @@ from werkzeug.utils import secure_filename
 from ultralytics import YOLO
 from dotenv import load_dotenv
 
-from form_analyzer_model import FormAnalyzer1DCNN, process_results_api
+from form_analyzer import FormAnalyzer1DCNN, process_results_api
 
 device = torch.device("mps" if torch.backends.mps.is_available() else "cpu")
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
-# YOLO model
 load_dotenv()
+
+# YOLO model
 model_path = os.environ.get("MODEL_PATH", ".")
 if model_path.startswith("runs"):
     model_path = os.path.join(model_path, "weights/best.pt")
 
-logging.info(f"Loading YOLO model from: {model_path}")
+logging.info(f"Loading YOLO model (pose estimation)")
 try:
     model = YOLO(model_path).to(device)
 except Exception as e:
     logging.error(f"Failed to load model: {e}")
 
 # CNN model
-cnn_model = FormAnalyzer1DCNN(num_features=51, num_classes=4)
-cnn_model.load_state_dict(torch.load('runs/form/weights/form_analyzer_model.pt', map_location=device))
-cnn_model.to(device)
+cnn_model_path = os.environ.get("CNN_MODEL_PATH", ".")
+cnn_model = FormAnalyzer1DCNN(num_features=51, num_classes=4).to(device)
+logging.info(f"Loading CNN (form analysis)")
+try:
+    cnn_model.load_state_dict(torch.load('runs/form/weights/form_analyzer_model.pt', map_location=device))
+except Exception as e:
+    logging.error(f"Failed to load CNN model: {e}")
 cnn_model.eval()
+
+# file organization
+UPLOAD_FOLDER = 'uploads'
+os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+OUTPUT_FOLDER = 'runs/pose/user_submissions/predict/'
+os.makedirs(OUTPUT_FOLDER, exist_ok=True)
 
 app = Flask(__name__)
 CORS(app)
-
-# path to save user upload (unedited video)
-UPLOAD_FOLDER = 'tmp_uploads'
-os.makedirs(UPLOAD_FOLDER, exist_ok=True)
-app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
-
-# path to video with pose overlay
-OUTPUT_FOLDER = 'runs/pose/user_submissions/predict/'
-os.makedirs(OUTPUT_FOLDER, exist_ok=True)
 
 @app.route('/api/pose_estimate', methods=['POST'])
 def pose_estimate():
@@ -58,7 +60,7 @@ def pose_estimate():
 
     try:
         filename = secure_filename(file.filename)
-        filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+        filepath = os.path.join(UPLOAD_FOLDER, filename)
         file.save(filepath)
 
         output_filename = f"{filename.rsplit('.', 1)[0]}.mp4"
@@ -69,16 +71,17 @@ def pose_estimate():
         logging.info(f"Successfully saved {filename} to {filepath}. Starting YOLO inference...")
 
         results = model(source=filepath, save=True, stream=True, conf=0.5, project="user_submissions", exist_ok=True)
-        print("Pose results complete! Processing results...")
+        logging.info("Pose results complete! Processing results...")
         
-        keypoint_tensor = process_results_api(results, filename)
+        keypoint_tensor = process_results_api(results)
 
         cnn_input = keypoint_tensor.unsqueeze(0).permute(0, 2, 1).to(device)
 
-        with torch.no_grad(): # Disable gradient tracking for speed and memory
+        with torch.no_grad():
+            logging.info("Results processed successfully. Analyzing form...")
             logits = cnn_model(cnn_input)
             
-            # Apply Sigmoid to convert raw logits into 0.0 -> 1.0 probabilities
+            # convert raw logits into 0.0 -> 1.0 probabilities
             probabilities = torch.sigmoid(logits).squeeze(0) 
             
         # Map probabilities to percentages for the React frontend
@@ -90,16 +93,13 @@ def pose_estimate():
         }
         logging.info(f"Model predictions: {confidences}")
 
-        # Clean up the original uploaded file to save space
         if os.path.exists(filepath):
             os.remove(filepath)
 
-        # Send the actual video file back to the React frontend
-        # return send_file(output_filepath, mimetype='video/mp4')
         return jsonify({
             "status": "success",
             "confidences": confidences,
-            "video_url": f"/api/videos/{output_filename}" # Provide URL for React to fetch video
+            "video_url": f"/api/videos/{output_filename}"
         }), 200
 
     except Exception as e:
@@ -109,13 +109,4 @@ def pose_estimate():
 
 @app.route('/api/videos/<filename>', methods=['GET'])
 def get_video(filename):
-    """Allows the React frontend to fetch the rendered YOLO video file."""
     return send_from_directory(OUTPUT_FOLDER, filename, mimetype='video/mp4')
-
-# if __name__ == '__main__':
-#     app.run(debug=True, port=8000)
-
-
-# performance notes:
-# 793 frames in 58 s using small model
-# same video done in 38.46 s using nano 

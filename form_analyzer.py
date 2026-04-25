@@ -116,17 +116,17 @@ def process_results_api(results):
 
 
 class FormAnalyzer1DCNN(nn.Module):
-    def __init__(self, num_features=51, num_classes=4):
+    def __init__(self, num_features=51, num_classes=4, kernel_size=3):
         super(FormAnalyzer1DCNN, self).__init__()
         
         # 1D Convolutional Layers sliding across the time dimension
         self.conv_block = nn.Sequential(
-            nn.Conv1d(in_channels=num_features, out_channels=64, kernel_size=3, padding=1),
+            nn.Conv1d(in_channels=num_features, out_channels=64, kernel_size=kernel_size, padding=1),
             nn.ReLU(),
             nn.BatchNorm1d(64),
-            nn.Dropout(0.3),
+            nn.Dropout(0.4),
             
-            nn.Conv1d(in_channels=64, out_channels=128, kernel_size=3, padding=1),
+            nn.Conv1d(in_channels=64, out_channels=128, kernel_size=kernel_size, padding=1),
             nn.ReLU(),
             nn.BatchNorm1d(128),
             nn.Dropout(0.3)

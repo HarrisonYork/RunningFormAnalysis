@@ -2,6 +2,7 @@
 path: datasets/athlete_pose_converted
 train: train/images
 val: valid/images
+test: test/images
 
 names:
   0: runner

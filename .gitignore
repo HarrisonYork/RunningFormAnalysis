@@ -1,7 +1,6 @@
 
 .venv/
 .env
-datasets/athlete_pose_annotations/
 datasets/private/
 datasets/athlete_pose_converted/test/
 datasets/athlete_pose_converted/train/

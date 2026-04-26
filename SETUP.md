@@ -12,9 +12,18 @@ pip install -r requirements.txt
 ## Frontend
 `cd frontend`
 `npm run dev`
+
+if there is a command not found response, run this: `npm install` and then retry
 The frontend should now be running at http://localhost:5173 (or the port specified by Vite).
 
 ## Backend:
+First, create a `.env` file. This specifies which model version to use, for example:
+
+YOLO_MODEL_PATH = "../models/pose_estimation/3_model_n_epoch5_freeze10.pt"
+CNN_MODEL_PATH = "../models/form_analysis/form_analyzer_model_7kernel.pt"
+
+more model options are in the models/ directory
+
 `cd src`
 `flask --app api.py run`
 The backend should now be running at http://127.0.0.1:5000

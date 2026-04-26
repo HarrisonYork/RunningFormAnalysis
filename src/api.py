@@ -1,7 +1,6 @@
 import os
 import torch
 import logging
-import subprocess
 from flask import Flask, jsonify, request, send_file, send_from_directory
 from flask_cors import CORS
 from werkzeug.utils import secure_filename
@@ -17,10 +16,10 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(
 load_dotenv()
 
 # YOLO model
-model_path = os.environ.get("MODEL_PATH", ".")
+model_path = os.environ.get("YOLO_MODEL_PATH", ".")
 logging.info(f"Loading YOLO model (pose estimation)")
 try:
-    model = YOLO(model_path).to(device)
+    model = YOLO(model_path, task='pose').to(device)
 except Exception as e:
     logging.error(f"Failed to load model: {e}")
 

@@ -8,7 +8,7 @@ The core computer vision pipeline relies on Ultralytics YOLO11 for tracking and 
 * **Task Documentation:** [Ultralytics Pose Estimation](https://docs.ultralytics.com/tasks/pose/)
 
 ### Gemini
-[TODO]
+Google Gemini was used to write a large portion of the code used in this project, but each function was tested for intended functionality. This sped up the development process, especially with designing the basic frontend and managing large amounts of data.
 
 ### AthletePose3D
 This project references the AthletePose3D dataset for kinematic validation and understanding human pose estimation in complex athletic movements. 

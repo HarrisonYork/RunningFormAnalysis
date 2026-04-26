@@ -1,12 +1,12 @@
 
 .venv/
 .env
-datasets/private/
-datasets/athlete_pose_converted/test/
-datasets/athlete_pose_converted/train/
-datasets/athlete_pose_converted/valid/
-datasets/custom_running_form/keypoints/
-datasets/custom_running_form/videos/
+
+data/athlete_pose_converted/test/
+data/athlete_pose_converted/train/
+data/athlete_pose_converted/valid/
+data/custom_running_form/keypoints/
+data/custom_running_form/videos/
 
 runs/
 uploads/

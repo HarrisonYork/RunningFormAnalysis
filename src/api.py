@@ -18,9 +18,6 @@ load_dotenv()
 
 # YOLO model
 model_path = os.environ.get("MODEL_PATH", ".")
-if model_path.startswith("runs"):
-    model_path = os.path.join(model_path, "weights/best.pt")
-
 logging.info(f"Loading YOLO model (pose estimation)")
 try:
     model = YOLO(model_path).to(device)
@@ -29,18 +26,18 @@ except Exception as e:
 
 # CNN model
 cnn_model_path = os.environ.get("CNN_MODEL_PATH", ".")
-cnn_model = FormAnalyzer1DCNN(num_features=51, num_classes=4).to(device)
+cnn_model = FormAnalyzer1DCNN(num_features=51, num_classes=4, kernel_size=7).to(device)
 logging.info(f"Loading CNN (form analysis)")
 try:
-    cnn_model.load_state_dict(torch.load('runs/form/weights/form_analyzer_model.pt', map_location=device))
+    cnn_model.load_state_dict(torch.load(cnn_model_path, map_location=device))
 except Exception as e:
     logging.error(f"Failed to load CNN model: {e}")
 cnn_model.eval()
 
 # file organization
-UPLOAD_FOLDER = 'uploads'
+UPLOAD_FOLDER = '../uploads'
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
-OUTPUT_FOLDER = 'runs/pose/user_submissions/predict/'
+OUTPUT_FOLDER = '../runs/pose/user_submissions/predict/'
 os.makedirs(OUTPUT_FOLDER, exist_ok=True)
 
 app = Flask(__name__)

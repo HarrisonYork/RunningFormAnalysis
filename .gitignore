@@ -10,5 +10,6 @@ data/custom_running_form/videos/
 
 runs/
 uploads/
+src/__pycache__/
 
 yolo*

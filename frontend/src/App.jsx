@@ -7,7 +7,6 @@ function App() {
   const [previewUrl, setPreviewUrl] = useState(null);
   const [isUploading, setIsUploading] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
-  const [resultVideoUrl, setResultVideoUrl] = useState(null);
   const [videoUrl, setVideoUrl] = useState(null);
   const [confidences, setConfidences] = useState(null);
   
@@ -43,13 +42,13 @@ const triggerFileInput = () => {
     if (previewUrl) {
       URL.revokeObjectURL(previewUrl);
     }
-    if (resultVideoUrl) {
-      URL.revokeObjectURL(resultVideoUrl);
+    if (videoUrl) {
+      URL.revokeObjectURL(videoUrl);
     }
 
     setVideoFile(null);
     setPreviewUrl(null);
-    setResultVideoUrl(null);
+    setVideoUrl(null);
     setConfidences(null);
     setErrorMsg('');
     
@@ -63,7 +62,6 @@ const triggerFileInput = () => {
     
     setIsUploading(true);
     setErrorMsg('');
-    setResultVideoUrl(null); // Clear previous results
     
     const formData = new FormData();
     formData.append("video", videoFile);
@@ -81,8 +79,7 @@ const triggerFileInput = () => {
       }
 
       setConfidences(data.confidences);
-      setVideoUrl(data.video_url);
-      handleVideo(data.video_url);
+      setVideoUrl("http://127.0.0.1:5000/" + data.video_url);
     } catch (err) {
       console.error("Upload error:", err);
       setError(err.message);
@@ -90,31 +87,6 @@ const triggerFileInput = () => {
       setIsUploading(false);
     }
   };
-
-  const handleVideo = async (newVideoUrl) => {
-    if (!videoUrl) {
-      return;
-    }
-
-    const endpoint = "http://127.0.0.1:5000/" + newVideoUrl;
-    try {
-      const response = await fetch(endpoint, {
-          method: 'GET',
-      });
-
-      if (!response.ok) {
-        throw new Error(`Server error: ${response.statusText}`);
-      }
-
-      const videoBlob = await response.blob();
-      const resVideoUrl = URL.createObjectURL(videoBlob);
-      
-      setResultVideoUrl(resVideoUrl);
-
-    } catch (error) {
-      setErrorMsg("Failed to fetch the video. Please check the server.");
-    }
-  }
 
   return (
     <div id="app-container">
@@ -144,7 +116,7 @@ const triggerFileInput = () => {
         {videoFile && (
           <div className="active-video-container">
             
-            {!resultVideoUrl && previewUrl && (
+            {!videoUrl && previewUrl && (
               <div className="video-preview">
                 <video 
                   src={previewUrl} 
@@ -182,9 +154,9 @@ const triggerFileInput = () => {
               </div>
             )}
 
-            {!isUploading && resultVideoUrl && (
+            {!isUploading && videoUrl && (
               <div className="results-container">
-                <video src={resultVideoUrl} controls>
+                <video src={videoUrl} controls>
                   Your browser does not support the video tag.
                 </video>
                 <p className="file-name"><strong>Analyzed:</strong> {videoFile.name}</p>
@@ -200,8 +172,7 @@ const triggerFileInput = () => {
                 Clear Video
               </button>
               
-              {/* Only show the Analyze button if we haven't successfully generated the result yet */}
-              {!resultVideoUrl && (
+              {!videoUrl && (
                 <button 
                   onClick={handleAnalyze} 
                   disabled={!videoFile || isUploading}

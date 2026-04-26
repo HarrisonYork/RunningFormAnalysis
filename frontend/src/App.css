@@ -173,7 +173,8 @@ button:disabled {
 }
 
 #project-details p {
-  text-align: left;
+  text-align: center;
+  margin-bottom: 10px;
 }
 
 #project-details ul {

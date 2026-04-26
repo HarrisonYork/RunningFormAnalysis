@@ -82,23 +82,21 @@ const triggerFileInput = () => {
 
       setConfidences(data.confidences);
       setVideoUrl(data.video_url);
-
+      handleVideo(data.video_url);
     } catch (err) {
       console.error("Upload error:", err);
       setError(err.message);
     } finally {
       setIsUploading(false);
-
-      handleVideo();
     }
   };
 
-  const handleVideo = async () => {
+  const handleVideo = async (newVideoUrl) => {
     if (!videoUrl) {
       return;
     }
 
-    const endpoint = "http://127.0.0.1:5000/" + videoUrl;
+    const endpoint = "http://127.0.0.1:5000/" + newVideoUrl;
     try {
       const response = await fetch(endpoint, {
           method: 'GET',
@@ -123,6 +121,7 @@ const triggerFileInput = () => {
       <section className="upload-section">
         <h1>Running Form Analysis</h1>
         <p>Upload a video to analyze your running form and receive tailored feedback.</p>
+        <p>Videos should be a side profile.</p>
 
         {/* Large Placeholder Upload Box */}
         {!videoFile && (
@@ -163,7 +162,7 @@ const triggerFileInput = () => {
                     className="loading-overlay"
                     style={{
                       position: 'absolute',
-                      top: 0, left: 0, right: 0, bottom: 0,
+                      top: '-100px', left: 0, right: 0, bottom: 0,
                       display: 'flex',
                       flexDirection: 'column',
                       alignItems: 'center',
@@ -229,9 +228,9 @@ const triggerFileInput = () => {
         <p>
           This tool uses machine learning to estimate a runner's pose and analyze their form.
         </p>
-        <p>
+        {/* <p>
           Upload a clear, side-profile video of your run to get started.
-        </p>
+        </p> */}
         <p>
           <a href="https://github.com/HarrisonYork/RunningForm">Project Code</a>
         </p>

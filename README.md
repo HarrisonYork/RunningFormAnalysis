@@ -41,6 +41,10 @@ The frontend should now be running at http://localhost:5173 (or the port specifi
 
 # Video Links
 
+Project Pitch:
+https://youtu.be/L9tpGSGw2sY?si=PjH6aKZ1vm5B6cH3
+
+Technical Walkthrough:
 
 
 # Evaluation

@@ -2,6 +2,8 @@ import { useState, useRef } from 'react';
 import './App.css';
 import FormFeedback from './FormFeedback';
 
+// AI was used to write the original App.jsx file, and update it as needed.
+
 function App() {
   const [videoFile, setVideoFile] = useState(null);
   const [previewUrl, setPreviewUrl] = useState(null);

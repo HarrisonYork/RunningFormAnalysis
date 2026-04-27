@@ -9,6 +9,8 @@ from sklearn.model_selection import train_test_split
 class RunningFormDataset(Dataset):
     """
     Custom PyTorch Dataset for loading normalized time-series keypoints.
+
+    AI was used to generate this function.
     """
     def __init__(self, dataframe):
         self.data = dataframe.reset_index(drop=True)
@@ -32,6 +34,9 @@ class RunningFormDataset(Dataset):
 
 
 def pad(batch):
+    """
+    AI was used to generate this function.
+    """
     # Separate features and labels from the batch
     features = [item[0] for item in batch]
     labels = torch.stack([item[1] for item in batch])
@@ -46,6 +51,8 @@ def create_dataloaders(csv_path, batch_size=16):
     Reads the auto-labeled CSV, performs a 70/15/15 split,
     with relative amounts of each error type,
     and returns PyTorch DataLoaders.
+
+    AI was used to generate this function.
     """
     df = pd.read_csv(csv_path)
     
@@ -132,7 +139,7 @@ class FormAnalyzer1DCNN(nn.Module):
             nn.Dropout(0.3)
         )
         
-        # Adaptive pooling handles dynamic time lengths (short clips vs. long clips)
+        # suggested by AI to handle dynamic video lengths
         self.global_pool = nn.AdaptiveAvgPool1d(1)
         
         self.classifier = nn.Sequential(

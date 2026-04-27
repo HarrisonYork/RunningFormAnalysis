@@ -10,6 +10,18 @@ The core computer vision pipeline relies on Ultralytics YOLO11 for tracking and 
 ### Gemini
 Google Gemini was used to write a large portion of the code used in this project, but each function was tested for intended functionality. This sped up the development process, especially with designing the basic frontend and managing large amounts of data.
 
+Where AI was used to significantly generate code:
+* frontend/
+
+* notebooks/pose_estimator_data.ipynb - extracting running images and annotations
+
+* notebooks/form_analyzer_training.ipynb - Normalizing keypoints and Labels Using Kinematics sections
+
+* src/form_analyzer.py - writing the dataset and DataLoader functions to use with the running form dataset
+
+AI was often used to debug code.
+
+
 ### AthletePose3D
 This project references the AthletePose3D dataset for kinematic validation and understanding human pose estimation in complex athletic movements. 
 

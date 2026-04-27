@@ -1,6 +1,6 @@
 # Running Form Analysis
 
-This project takes a video of runners and analyzes their form, identifying four different errors and providing feedback to correct them.
+This project takes a video of a runner and analyzes their form, identifying four different errors and providing feedback to correct them.
 
 # What It Does
 
@@ -50,9 +50,16 @@ The frontend should now be running at http://localhost:5173 (or the port specifi
 # Video Links
 
 Project Pitch:
+
 https://youtu.be/L9tpGSGw2sY?si=PjH6aKZ1vm5B6cH3
 
 Technical Walkthrough:
+
+https://youtu.be/BV-VexuvZBg
+
+Custom Running Form Dataset:
+
+https://drive.google.com/drive/folders/1mKjn0pxlxyI23ZbF3MbOV4gIdjpyxHSE?usp=sharing
 
 
 # Evaluation
@@ -80,9 +87,9 @@ After evaluating model performance with different kernel size and patience, I se
 
 
 <br>
-Evaluation details for the pose estimation model are in src/pose_estimator_training.py
+Evaluation details for the pose estimation model are in notebooks/pose_estimator_training.ipynb
 
-Evaluation details for the form analysis model are in src/form_analyzer_training.py
+Evaluation details for the form analysis model are in notebooks/form_analyzer_training.ipynb
 
 # Example Screenshots
 

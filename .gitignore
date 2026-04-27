@@ -8,6 +8,8 @@ data/athlete_pose_converted/valid/
 data/custom_running_form/keypoints/
 data/custom_running_form/videos/
 
+videos/RunningFormTechnical.mp4
+
 runs/
 uploads/
 src/__pycache__/

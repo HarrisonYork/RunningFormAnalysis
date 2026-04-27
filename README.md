@@ -9,9 +9,11 @@ This semester, I decided to challenge myself and run the Tarheel 10, a ten-mile 
 # Quick Start
 
 `git clone https://github.com/HarrisonYork/RunningFormAnalysis.git`
+
 `cd RunningFormAnalysis`
 
 `python3 -m venv .venv`
+
 `source .venv/bin/activate`
 
 `pip install -r requirements.txt`
@@ -21,20 +23,26 @@ First create a `.env` file.
 This file specifies which model version to use, for example:
 
 `YOLO_MODEL_PATH = "../models/pose_estimation/3_model_n_epoch5_freeze10.pt"`
+
 `CNN_MODEL_PATH = "../models/form_analysis/form_analyzer_model_7kernel.pt"`
 
 more model options are in the models/ directory
 
 `cd src`
+
 `flask --app api.py run`
 
 ## Frontend
 In a new terminal window, navigate to RunningFormAnalysis/ and run the following:
+
 `cd frontend`
+
 `npm run dev`
 
 If there is a command not found response, run this: 
+
 `npm install`
+
 `npm run dev`
 
 The frontend should now be running at http://localhost:5173 (or the port specified by Vite).
@@ -79,6 +87,15 @@ Evaluation details for the form analysis model are in src/form_analyzer_training
 # Example Screenshots
 
 User Interface:
-![](videos/example_images/upload.png)
+
+![](videos/example_images/home.png)
 
 
+Uploading Process:
+
+![alt text](videos/example_images/analyzing.png)
+
+
+Analysis:
+
+![alt text](videos/example_images/analyzed.png)

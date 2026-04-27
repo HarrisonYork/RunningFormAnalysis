@@ -9,6 +9,9 @@ from dotenv import load_dotenv
 
 from form_analyzer import FormAnalyzer1DCNN, process_results_api
 
+app = Flask(__name__)
+CORS(app)
+
 device = torch.device("mps" if torch.backends.mps.is_available() else "cpu")
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -34,13 +37,10 @@ except Exception as e:
 cnn_model.eval()
 
 # file organization
-UPLOAD_FOLDER = '../uploads'
+UPLOAD_FOLDER = os.path.join('..', 'uploads')
+OUTPUT_FOLDER = os.path.join('..', 'runs', 'pose', 'user_submissions', 'predict')
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
-OUTPUT_FOLDER = '../runs/pose/user_submissions/predict/'
 os.makedirs(OUTPUT_FOLDER, exist_ok=True)
-
-app = Flask(__name__)
-CORS(app)
 
 @app.route('/api/pose_estimate', methods=['POST'])
 def pose_estimate():

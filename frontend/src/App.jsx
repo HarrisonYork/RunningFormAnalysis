@@ -15,10 +15,10 @@ function App() {
   const MAX_FILE_SIZE_MB = 50;
   const MAX_FILE_SIZE_BYTES = MAX_FILE_SIZE_MB * 1024 * 1024;
 
-const handleFileChange = (event) => {
+  const handleFileChange = (event) => {
     setErrorMsg('');
     const file = event.target.files[0];
-    
+      
     if (file) {
       if (file.size > MAX_FILE_SIZE_BYTES) {
         setErrorMsg(`File size exceeds the ${MAX_FILE_SIZE_MB}MB limit. Please upload a smaller video.`); 
@@ -30,7 +30,7 @@ const handleFileChange = (event) => {
     }
   };
 
-const triggerFileInput = () => {
+  const triggerFileInput = () => {
     if (fileInputRef.current && !isUploading) {
       fileInputRef.current.click();
     }
@@ -53,7 +53,7 @@ const triggerFileInput = () => {
     setErrorMsg('');
     
     if (fileInputRef.current) {
-      fileInputRef.current.value = ''; // Reset the actual input element
+      fileInputRef.current.value = '';
     }
   };
 
@@ -79,7 +79,7 @@ const triggerFileInput = () => {
       }
 
       setConfidences(data.confidences);
-      setVideoUrl("http://127.0.0.1:5000/" + data.video_url);
+      setVideoUrl("http://127.0.0.1:5000" + data.video_url);
     } catch (err) {
       console.error("Upload error:", err);
       setError(err.message);
@@ -95,7 +95,6 @@ const triggerFileInput = () => {
         <p>Upload a video to analyze your running form and receive tailored feedback.</p>
         <p>Videos should be a side profile.</p>
 
-        {/* Large Placeholder Upload Box */}
         {!videoFile && (
           <div className="upload-box" onClick={triggerFileInput}>
             <input 

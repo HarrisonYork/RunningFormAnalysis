@@ -75,3 +75,10 @@ After evaluating model performance with different kernel size and patience, I se
 Evaluation details for the pose estimation model are in src/pose_estimator_training.py
 
 Evaluation details for the form analysis model are in src/form_analyzer_training.py
+
+# Example Screenshots
+
+User Interface:
+![](videos/example_images/upload.png)
+
+
